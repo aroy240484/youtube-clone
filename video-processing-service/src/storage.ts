@@ -74,7 +74,7 @@ export async function uploadProcessedVideo(fileName: string) {
   );
 
   // Set the video to be public
-  await bucket.file(fileName).makePublic;
+  await bucket.file(fileName).makePublic();
 }
 
 /**
