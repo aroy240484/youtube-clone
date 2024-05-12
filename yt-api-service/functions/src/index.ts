@@ -13,6 +13,7 @@ const v1Region = "northamerica-northeast1";
 const v2Region = "northamerica-northeast2";
 
 export const createUser = v1Functions.region(v1Region)
+  .runWith({maxInstances: 1})
   .auth.user().onCreate((user) => {
     const userInfo = {
       uid: user.uid,
@@ -35,6 +36,8 @@ export const generateUploadUrl = v2Functions.https
       );
     }
 
+    v2Functions.logger
+      .info("Authenticated call. Generating signed URL...");
     const auth = request.auth;
     const data = request.data;
     const bucket = storage.bucket(rawVideoBucketName);
@@ -49,5 +52,6 @@ export const generateUploadUrl = v2Functions.https
       expires: Date.now() + 15 * 60 * 1000, // 15 minutes
     });
 
-    return [url, fileName];
+    v2Functions.logger.info(`Signed URL generated: ${url}`);
+    return {url, fileName};
   });
