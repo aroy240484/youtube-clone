@@ -1,21 +1,16 @@
 import { Storage } from '@google-cloud/storage';
 import fs from 'fs';
 import ffmpeg from 'fluent-ffmpeg';
+import { LOCAL_PROCESSED_VIDEO_PATH, LOCAL_RAW_VIDEO_PATH, PROCESSED_VIDEO_BUCKET_NAME, RAW_VIDEO_BUCKET_NAME } from './config';
 
 const storage = new Storage();
-
-const rawVideoBucketName = 'aroy-yt-raw-videos';
-const processedVideoBucketName = 'aroy-yt-processed-videos';
-
-const localRawVideoPath = './raw-videos';
-const localProcessedVideoPath = './processed-videos';
 
 /**
  * Creates the local directories for raw and processed videos
  */
 export function setupDirectories() {
-  ensureDirectoryExistence(localRawVideoPath);
-  ensureDirectoryExistence(localProcessedVideoPath);
+  ensureDirectoryExistence(LOCAL_RAW_VIDEO_PATH);
+  ensureDirectoryExistence(LOCAL_PROCESSED_VIDEO_PATH);
 }
 
 /**
@@ -25,7 +20,7 @@ export function setupDirectories() {
  */
 export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
-    ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
+    ffmpeg(`${LOCAL_RAW_VIDEO_PATH}/${rawVideoName}`)
     .outputOptions('-vf', 'scale=-1:360') // 360p
     .on('end', function() {
         console.log('Processing finished successfully');
@@ -35,7 +30,7 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
         console.log(`An error occurred: ${err.message}`);
         reject(err);
     })
-    .save(`${localProcessedVideoPath}/${processedVideoName}`);
+    .save(`${LOCAL_PROCESSED_VIDEO_PATH}/${processedVideoName}`);
   });  
 }
 
@@ -45,14 +40,14 @@ export function convertVideo(rawVideoName: string, processedVideoName: string) {
  * @returns A promise that resolves when the file has been downloaded.
  */
 export async function downloadRawVideo(fileName: string) {
-  await storage.bucket(rawVideoBucketName)
+  await storage.bucket(RAW_VIDEO_BUCKET_NAME)
     .file(fileName)
     .download({
-      destination: `${localRawVideoPath}/${fileName}`,
+      destination: `${LOCAL_RAW_VIDEO_PATH}/${fileName}`,
     });
 
     console.log(
-      `gs://${rawVideoBucketName}/${fileName} downloaded to ${localRawVideoPath}/${fileName}.`
+      `gs://${RAW_VIDEO_BUCKET_NAME}/${fileName} downloaded to ${LOCAL_RAW_VIDEO_PATH}/${fileName}.`
     );
 }
 
@@ -62,15 +57,15 @@ export async function downloadRawVideo(fileName: string) {
  * @returns A promise that resolves when the file has been uploaded.
  */
 export async function uploadProcessedVideo(fileName: string) {
-  const bucket = storage.bucket(processedVideoBucketName);
+  const bucket = storage.bucket(PROCESSED_VIDEO_BUCKET_NAME);
 
   // Upload video to bucket
-  await bucket.upload(`${localProcessedVideoPath}/${fileName}`, {
+  await bucket.upload(`${LOCAL_PROCESSED_VIDEO_PATH}/${fileName}`, {
     destination: fileName,
   });
 
   console.log(
-    `${localProcessedVideoPath}/${fileName} uploaded to gs://${processedVideoBucketName}/${fileName}`
+    `${LOCAL_PROCESSED_VIDEO_PATH}/${fileName} uploaded to gs://${PROCESSED_VIDEO_BUCKET_NAME}/${fileName}`
   );
 
   // Set the video to be public
@@ -83,7 +78,7 @@ export async function uploadProcessedVideo(fileName: string) {
  * @returns A promise that resolves when the file has been deleted.
  */
 export function deleteRawVideo(fileName: string) {
-  return deleteFile(`${localRawVideoPath}/${fileName}`);
+  return deleteFile(`${LOCAL_RAW_VIDEO_PATH}/${fileName}`);
 }
 
 /**
@@ -92,7 +87,7 @@ export function deleteRawVideo(fileName: string) {
  * @returns A promise that resolves when the file has been deleted.
  */
 export function deleteProcessedVideo(fileName: string) {
-  return deleteFile(`${localProcessedVideoPath}/${fileName}`);
+  return deleteFile(`${LOCAL_PROCESSED_VIDEO_PATH}/${fileName}`);
 }
 
 /**
