@@ -1,11 +1,21 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "./firebase";
 
-const generateUploadUrlFunction = httpsCallable(functions, 'generateUploadUrl');
+const generateUploadUrlApi = httpsCallable(functions, 'generateUploadUrl');
+const getVideosApi = httpsCallable(functions, 'getVideos');
+
+export interface VideoInfo {
+  id?: string,
+  uid?: string,
+  filename?: string,
+  status?: 'processing' | 'processed',
+  title?: string,
+  description?: string  
+}
 
 export async function uploadRawVideo(file: File) {
   // Request a signed URL for uploading the file
-  const response: any = await generateUploadUrlFunction({
+  const response: any = await generateUploadUrlApi({
     fileExtension: file.name.split('.').pop()
   });
 
@@ -21,3 +31,7 @@ export async function uploadRawVideo(file: File) {
   return uploadResult;
 }
 
+export async function getVideos() {
+  const response = await getVideosApi();
+  return response.data as VideoInfo[];
+}
