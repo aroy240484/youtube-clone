@@ -11,6 +11,16 @@ const storage = new Storage();
 const rawVideoBucketName = "aroy-yt-raw-videos";
 const v1Region = "northamerica-northeast1";
 const v2Region = "northamerica-northeast2";
+const videoCollectionId = "videos";
+
+export interface Video {
+  id?: string,
+  uid?: string,
+  filename?: string,
+  status?: "processing" | "processed",
+  title?: string,
+  description?: string
+}
 
 export const createUser = v1Functions.region(v1Region)
   .runWith({maxInstances: 1})
@@ -54,4 +64,11 @@ export const generateUploadUrl = v2Functions.https
 
     v2Functions.logger.info(`Signed URL generated: ${url}`);
     return {url, fileName};
+  });
+
+export const getVideos = v2Functions.https
+  .onCall({region: v2Region, maxInstances: 1}, async () => {
+    const querySnapshot =
+      await firestore.collection(videoCollectionId).limit(10).get();
+    return querySnapshot.docs.map((doc) => doc.data());
   });
